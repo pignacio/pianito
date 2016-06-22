@@ -1,7 +1,7 @@
 # Cython PXD file for SDL2_mixer 2.0.0
-from sdl2.SDL2 cimport *
+from .SDL2 cimport *
 
-cdef extern from "SDL_mixer.h" nogil:
+cdef extern from "SDL2/SDL_mixer.h" nogil:
 
     ctypedef enum MIX_InitFlags:
         MIX_INIT_FLAC
@@ -73,13 +73,13 @@ cdef extern from "SDL_mixer.h" nogil:
 
     ctypedef void (*Mix_EffectFunc_t) (int chan, void* stream, int len, void* udata)
     ctypedef void (*Mix_EffectDone_t) (int chan, void* udata)
-    
+
     int Mix_RegisterEffect(int chan, Mix_EffectFunc_t f, Mix_EffectDone_t d, void* arg)
     int Mix_UnregisterEffect(int channel, Mix_EffectFunc_t f)
     int Mix_UnregisterAllEffects(int channel)
 
     int MIX_EFFECTSMAXSPEED # macro
-    
+
     int Mix_SetPanning(int channel, Uint8 left, Uint8 right)
     int Mix_SetPosition(int channel, Sint16 angle, Uint8 distance)
     int Mix_SetDistance(int channel, Uint8 distance)

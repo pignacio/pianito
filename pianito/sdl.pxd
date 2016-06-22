@@ -10,10 +10,15 @@ from SDL2 cimport (
     Uint8,
     Uint32,
 )
+from SDL2_mixer cimport (
+    Mix_Chunk,
+)
 
 cdef class SDL:
     cdef bint sdl_inited
     cdef bint sdl_image_inited
+    cdef bint sdl_ttf_inited
+    cdef bint sdl_mixer_inited
 
 
 cdef class Window:
@@ -67,3 +72,11 @@ cdef class KeyboardState:
 
     cdef inline bint isOn(self, SDL_Scancode key):
         return self.state[<int>key]
+
+
+cdef class Chunk:
+    cdef Mix_Chunk* ptr
+
+    cpdef int play(self, int channel=*, int loops=*)
+    @staticmethod
+    cdef Chunk load(const char* path)

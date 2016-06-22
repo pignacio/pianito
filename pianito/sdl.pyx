@@ -36,6 +36,21 @@ from .SDL2_image cimport (
     IMG_Load,
     IMG_Quit,
 )
+from .SDL2_ttf cimport (
+    TTF_Init,
+    TTF_Quit,
+)
+from .SDL2_mixer cimport (
+    MIX_DEFAULT_FORMAT,
+    MIX_INIT_OGG,
+    Mix_CloseAudio,
+    Mix_FreeChunk,
+    Mix_Init,
+    Mix_LoadWAV,
+    Mix_OpenAudio,
+    Mix_PlayChannel,
+    Mix_Quit,
+)
 from .logutils cimport log_info, log_sdl_err, log_sdl_warn
 
 
@@ -43,6 +58,8 @@ cdef class SDL:
     def __cinit__(self):
         self.sdl_inited = False
         self.sdl_image_inited = False
+        self.sdl_ttf_inited = False
+        self.sdl_mixer_inited = False
 
         log_info("Initing SDL")
         if SDL_Init(SDL_INIT_EVERYTHING) < 0:
@@ -59,8 +76,33 @@ cdef class SDL:
         else:
             self.sdl_image_inited = True
 
+        log_info("Initing SDL_ttf")
+        if TTF_Init() < 0:
+            log_sdl_err("Could not init SDL_ttf")
+            return
+        elif Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0:
+            log_sdl_err("Problems opening audio channels")
+        else:
+            self.sdl_ttf_inited = True
+
+        log_info("Initing SDL_mixer")
+        if Mix_Init(MIX_INIT_OGG) < 0:
+            log_sdl_err("Could not init SDL_mixer")
+            return
+        else:
+            self.sdl_mixer_inited = True
+
+
     def __dealloc__(self):
         log_info("Cleaning SDL")
+        if self.sdl_mixer_inited:
+            log_info("Quitting SDL_mixer")
+            Mix_CloseAudio()
+            Mix_Quit()
+
+        if self.sdl_ttf_inited:
+            log_info("Quitting SDL_ttf")
+
         if self.sdl_image_inited:
             log_info("Quitting SDL_image")
             IMG_Quit()
@@ -215,3 +257,29 @@ cdef class KeyboardState:
 
     cdef void update(self):
         self.state = SDL_GetKeyboardState(NULL)
+
+
+cdef class Chunk:
+    def __dealloc__(self):
+        log_info("Freeing Chunk[%p]", self.ptr)
+        Mix_FreeChunk(self.ptr)
+        self.ptr = NULL
+
+    cpdef int play(self, int channel=-1, int loops=0):
+        cdef int res = Mix_PlayChannel(channel, self.ptr, loops)
+        if res < 0:
+            log_sdl_warn("Problems playing Chunk[%p]", self.ptr)
+        return res
+
+    @staticmethod
+    cdef Chunk load(const char* path):
+        log_info("Loading Chunk from '%s'", path)
+        cdef Mix_Chunk* ptr = Mix_LoadWAV(path)
+        if not ptr:
+            log_sdl_err("Could not load '%s'", path)
+            return None
+        else:
+            log_info("Wrapping Chunk[%p] from '%s'", ptr, path)
+            chunk = Chunk()
+            chunk.ptr = ptr
+            return chunk

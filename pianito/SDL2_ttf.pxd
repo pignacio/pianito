@@ -1,7 +1,7 @@
 # Cython PXD file for SDL2_ttf 2.0.12
-from sdl2.SDL2 cimport *
+from .SDL2 cimport *
 
-cdef extern from "SDL_ttf.h" nogil:
+cdef extern from "SDL2/SDL_ttf.h" nogil:
 
     int UNICODE_BOM_NATIVE # macro
     int UNICODE_BOM_SWAPPED # macro
