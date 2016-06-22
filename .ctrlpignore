@@ -1,0 +1,4 @@
+pianito/.*\.c
+pianito/.*\.so
+pianito/.*\.html
+build/.*
