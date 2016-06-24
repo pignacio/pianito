@@ -7,6 +7,8 @@ from .SDL2 cimport (
     SDLK_f,
     SDLK_q,
     SDLK_s,
+    SDLK_UP,
+    SDLK_DOWN,
     SDL_Event,
     SDL_KEYDOWN,
     SDL_PollEvent,
@@ -26,12 +28,16 @@ SCALE = ["A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab"]
 
 NOTES = ["{}{}".format(n, o) for o in "34" for n in SCALE]
 
-FOUR_CHORDS = [
-    [0, 4, 7, 12],
-    [7, 11, 14, 19],
-    [9, 12, 16, 21],
-    [5, 9, 12, 17],
-]
+MINOR = [0, 3, 7, 12]
+MAJOR = [0, 4, 7, 12]
+MINOR_7 = [0, 3, 7, 10, 12]
+MAJOR_7 = [0, 4, 7, 10, 12]
+
+
+def make_chord(chord, base):
+    base %= 12
+    return [n + base for n in chord]
+
 
 def run():
     cdef SDL_Event event
@@ -54,6 +60,8 @@ def run():
         print "FAILUREEEE"
         return
 
+    current = 0
+
     quit = False
     while not quit:
         while SDL_PollEvent(&event):
@@ -65,13 +73,17 @@ def run():
                 if key == SDLK_q or key == SDLK_ESCAPE:
                     quit = True
                 elif key == SDLK_a:
-                    chord = FOUR_CHORDS[0]
+                    chord = make_chord(MAJOR, current)
                 elif key == SDLK_s:
-                    chord = FOUR_CHORDS[1]
+                    chord = make_chord(MAJOR, current + 7)
                 elif key == SDLK_d:
-                    chord = FOUR_CHORDS[2]
+                    chord = make_chord(MINOR, current + 9)
                 elif key == SDLK_f:
-                    chord = FOUR_CHORDS[3]
+                    chord = make_chord(MAJOR, current + 5)
+                elif key == SDLK_UP:
+                    current += 1
+                elif key == SDLK_DOWN:
+                    current -= 1
             if chord is not None:
                 Mix_HaltChannel(-1)
                 [chunks[n].play() for n in chord]

@@ -171,7 +171,7 @@ cdef class Renderer:
     @staticmethod
     cdef Renderer create(SDL_Window *window, Uint32 flags):
         assert window
-        log_info("Creating Renderer from Window[%p]", window)
+        log_info("Creating Renderer from Window[%p]. Flags = %d", window, flags)
         cdef SDL_Renderer* ptr = SDL_CreateRenderer(window, -1, flags)
         if not ptr:
             log_sdl_err("Could not create renderer from Window[%p]", window)
