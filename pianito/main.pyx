@@ -56,12 +56,21 @@ def make_chord(chord, base):
     return [n + base for n in chord]
 
 
+cdef make_text(text, Font font, Renderer renderer):
+    surface = font.render_text_blended(text, SDL_Color(255, 255, 255, 255))
+    return renderer.texture_from_surface(surface)
+
+cdef copy_to(Renderer renderer, Texture texture, int x, int y):
+    cdef SDL_Rect dest = SDL_Rect(x, y, texture.width, texture.height)
+    renderer.copy(texture, NULL, &dest)
+
+
 def run():
     cdef SDL_Event event
     cdef Window window
     cdef Renderer renderer
-    cdef SDL_Rect dest
     cdef Texture text
+    cdef Texture current_text
 
     window = Window.create(
         "Pianito :O",
@@ -72,11 +81,10 @@ def run():
         SDL_WINDOW_SHOWN)
     renderer = Renderer.create(window.ptr, SDL_RENDERER_ACCELERATED)
     font = Font.open("Inconsolata.otf", 30)
-    texts = [font.render_text_blended("Current: {}".format(n), SDL_Color(255, 255, 255, 255))
-             for n in SCALE]
-    texts = [renderer.texture_from_surface(t) for t in texts]
-    print "Hello world! This is pianito."
-    print NOTES
+    texts = [make_text(n, font, renderer) for n in SCALE]
+    minor_texts = [make_text(n + "m", font, renderer) for n in SCALE]
+    current_text = make_text("Current: ", font, renderer)
+
     chunks = [Chunk.load("notes/{}.ogg".format(n)) for n in NOTES]
     if not all(chunks):
         print "FAILUREEEE"
@@ -97,19 +105,15 @@ def run():
                 elif key == SDLK_a:
                     chord = make_chord(MAJOR, current)
                 elif key == SDLK_s:
-                    chord = make_chord(MAJOR, current + 7)
-                elif key == SDLK_d:
-                    chord = make_chord(MINOR, current + 9)
-                elif key == SDLK_f:
                     chord = make_chord(MAJOR, current + 5)
+                elif key == SDLK_d:
+                    chord = make_chord(MAJOR, current + 7)
                 elif key == SDLK_z:
-                    chord = make_chord(MAJOR_7, current)
+                    chord = make_chord(MINOR, current + 9)
                 elif key == SDLK_x:
-                    chord = make_chord(MAJOR_7, current + 7)
+                    chord = make_chord(MINOR, current + 2)
                 elif key == SDLK_c:
-                    chord = make_chord(MINOR_7, current + 9)
-                elif key == SDLK_v:
-                    chord = make_chord(MAJOR_7, current + 5)
+                    chord = make_chord(MINOR, current + 4)
                 elif key == SDLK_UP:
                     current += 1
                 elif key == SDLK_DOWN:
@@ -121,9 +125,16 @@ def run():
         renderer.clear()
 
         text = texts[current%12]
-        dest.x = dest.y = 30
-        dest.w = text.width
-        dest.h = text.height
-        renderer.copy(text, NULL, &dest)
+        copy_to(renderer, current_text, 30, 30)
+        copy_to(renderer, text, 30 + current_text.width, 30)
+
+        for pos, diff in enumerate([0, 5, 7]):
+            text = texts[(current + diff) % 12]
+            copy_to(renderer, text, 100 * (pos + 1), 100)
+
+        for pos, diff in enumerate([9, 2, 4]):
+            text = minor_texts[(current + diff) % 12]
+            copy_to(renderer, text, 100 * (pos + 1), 150)
+
         renderer.present()
         SDL_Delay(10)
