@@ -1,18 +1,34 @@
-from .sdl cimport SDL, Chunk, Window, Renderer
+from .logutils cimport (
+    log_info,
+)
+from .sdl cimport (
+    SDL,
+    Chunk,
+    Window,
+    Renderer,
+    Font,
+    Texture,
+)
 from .SDL2_mixer cimport Mix_HaltChannel
 from .SDL2 cimport (
     SDLK_DOWN,
     SDLK_ESCAPE,
     SDLK_UP,
     SDLK_a,
+    SDLK_c,
     SDLK_d,
     SDLK_f,
     SDLK_q,
     SDLK_s,
+    SDLK_v,
+    SDLK_x,
+    SDLK_z,
+    SDL_Color,
     SDL_Delay,
     SDL_Event,
     SDL_KEYDOWN,
     SDL_PollEvent,
+    SDL_Rect,
     SDL_QUIT,
     SDL_RENDERER_ACCELERATED,
     SDL_WINDOWPOS_UNDEFINED,
@@ -44,6 +60,9 @@ def run():
     cdef SDL_Event event
     cdef Window window
     cdef Renderer renderer
+    cdef SDL_Rect dest
+    cdef Texture text
+
     window = Window.create(
         "Pianito :O",
         SDL_WINDOWPOS_UNDEFINED,
@@ -52,8 +71,10 @@ def run():
         600,
         SDL_WINDOW_SHOWN)
     renderer = Renderer.create(window.ptr, SDL_RENDERER_ACCELERATED)
-    renderer.clear()
-    renderer.present()
+    font = Font.open("Inconsolata.otf", 30)
+    texts = [font.render_text_blended("Current: {}".format(n), SDL_Color(255, 255, 255, 255))
+             for n in SCALE]
+    texts = [renderer.texture_from_surface(t) for t in texts]
     print "Hello world! This is pianito."
     print NOTES
     chunks = [Chunk.load("notes/{}.ogg".format(n)) for n in NOTES]
@@ -81,6 +102,14 @@ def run():
                     chord = make_chord(MINOR, current + 9)
                 elif key == SDLK_f:
                     chord = make_chord(MAJOR, current + 5)
+                elif key == SDLK_z:
+                    chord = make_chord(MAJOR_7, current)
+                elif key == SDLK_x:
+                    chord = make_chord(MAJOR_7, current + 7)
+                elif key == SDLK_c:
+                    chord = make_chord(MINOR_7, current + 9)
+                elif key == SDLK_v:
+                    chord = make_chord(MAJOR_7, current + 5)
                 elif key == SDLK_UP:
                     current += 1
                 elif key == SDLK_DOWN:
@@ -88,4 +117,13 @@ def run():
             if chord is not None:
                 Mix_HaltChannel(-1)
                 [chunks[n].play() for n in chord]
+
+        renderer.clear()
+
+        text = texts[current%12]
+        dest.x = dest.y = 30
+        dest.w = text.width
+        dest.h = text.height
+        renderer.copy(text, NULL, &dest)
+        renderer.present()
         SDL_Delay(10)

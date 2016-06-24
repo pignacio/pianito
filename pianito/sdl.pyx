@@ -37,8 +37,12 @@ from .SDL2_image cimport (
     IMG_Quit,
 )
 from .SDL2_ttf cimport (
+    TTF_CloseFont,
     TTF_Init,
+    TTF_OpenFont,
     TTF_Quit,
+    TTF_RenderText_Solid,
+    TTF_RenderText_Blended,
 )
 from .SDL2_mixer cimport (
     MIX_DEFAULT_FORMAT,
@@ -283,3 +287,41 @@ cdef class Chunk:
             chunk = Chunk()
             chunk.ptr = ptr
             return chunk
+
+
+cdef class Font:
+    def __dealloc__(self):
+        log_info("Closing Font[%p]", self.ptr)
+        TTF_CloseFont(self.ptr)
+        self.ptr = NULL
+
+    @staticmethod
+    cdef Font wrap(TTF_Font* ptr, int size):
+        assert ptr
+        log_info("Wrapping Font[%p] (%d)", ptr, size)
+        font = Font()
+        font.ptr = ptr
+        font.size = size
+        return font
+
+    @staticmethod
+    cdef Font open(const char* path, int size):
+        cdef TTF_Font* ptr = TTF_OpenFont(path, size)
+        if not ptr:
+            log_sdl_err("Could not load font '%s'", path)
+            return None
+        return Font.wrap(ptr, size)
+
+    cdef Surface render_text_solid(self, const char* text, SDL_Color color):
+        cdef SDL_Surface* ptr = TTF_RenderText_Solid(self.ptr, text, color)
+        if not ptr:
+            log_sdl_err("Font[%p]: Could not render '%s'", self.ptr, text)
+            return None
+        return Surface.wrap(ptr)
+
+    cdef Surface render_text_blended(self, const char* text, SDL_Color color):
+        cdef SDL_Surface* ptr = TTF_RenderText_Blended(self.ptr, text, color)
+        if not ptr:
+            log_sdl_err("Font[%p]: Could not render '%s'", self.ptr, text)
+            return None
+        return Surface.wrap(ptr)

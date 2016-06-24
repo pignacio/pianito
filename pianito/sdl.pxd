@@ -1,17 +1,21 @@
 from SDL2 cimport (
     SDL_BlendMode,
+    SDL_Color,
     SDL_PixelFormat,
     SDL_Rect,
     SDL_Renderer,
+    SDL_Scancode,
     SDL_Surface,
     SDL_Texture,
     SDL_Window,
-    SDL_Scancode,
-    Uint8,
     Uint32,
+    Uint8,
 )
 from SDL2_mixer cimport (
     Mix_Chunk,
+)
+from SDL2_ttf cimport (
+    TTF_Font,
 )
 
 cdef class SDL:
@@ -80,3 +84,16 @@ cdef class Chunk:
     cpdef int play(self, int channel=*, int loops=*)
     @staticmethod
     cdef Chunk load(const char* path)
+
+
+cdef class Font:
+    cdef TTF_Font* ptr
+    cdef int size
+
+    @staticmethod
+    cdef Font wrap(TTF_Font* ptr, int size)
+    @staticmethod
+    cdef Font open(const char* path, int size)
+
+    cdef Surface render_text_solid(self, const char* text, SDL_Color color)
+    cdef Surface render_text_blended(self, const char* text, SDL_Color color)
