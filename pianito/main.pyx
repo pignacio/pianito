@@ -1,14 +1,15 @@
 from .sdl cimport SDL, Chunk, Window, Renderer
 from .SDL2_mixer cimport Mix_HaltChannel
 from .SDL2 cimport (
+    SDLK_DOWN,
     SDLK_ESCAPE,
+    SDLK_UP,
     SDLK_a,
     SDLK_d,
     SDLK_f,
     SDLK_q,
     SDLK_s,
-    SDLK_UP,
-    SDLK_DOWN,
+    SDL_Delay,
     SDL_Event,
     SDL_KEYDOWN,
     SDL_PollEvent,
@@ -87,3 +88,4 @@ def run():
             if chord is not None:
                 Mix_HaltChannel(-1)
                 [chunks[n].play() for n in chord]
+        SDL_Delay(10)
