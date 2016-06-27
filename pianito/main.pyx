@@ -91,10 +91,10 @@ cdef class Chord:
 CHORDS = [
     Chord.create(SDLK_q, MAJOR, 0),
     Chord.create(SDLK_w, MAJOR, 5),
-    Chord.create(SDLK_e, MAJOR, 9),
+    Chord.create(SDLK_e, MAJOR, 7),
     Chord.create(SDLK_r, MAJOR_7, 0),
     Chord.create(SDLK_t, MAJOR_7, 5),
-    Chord.create(SDLK_y, MAJOR_7, 9),
+    Chord.create(SDLK_y, MAJOR_7, 7),
     Chord.create(SDLK_a, MINOR, 9),
     Chord.create(SDLK_s, MINOR, 2),
     Chord.create(SDLK_d, MINOR, 4),
