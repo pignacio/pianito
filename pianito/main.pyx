@@ -179,7 +179,7 @@ def run():
 
         renderer.clear()
 
-        text = texts[current%12]
+        text = texts[current]
         copy_to(renderer, current_text, 30, 30)
         copy_to(renderer, text, 30 + current_text.width, 30)
 
