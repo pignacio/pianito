@@ -80,9 +80,14 @@ cdef make_text(text, Font font, Renderer renderer):
     surface = font.render_text_blended(text, SDL_Color(255, 255, 255, 255))
     return renderer.texture_from_surface(surface)
 
-cdef copy_to(Renderer renderer, Texture texture, int x, int y):
+
+cdef copy_to(Renderer renderer, Texture texture, int x, int y, color=None):
     cdef SDL_Rect dest = SDL_Rect(x, y, texture.width, texture.height)
+    if color is not None:
+        texture.set_color_mod(color[0], color[1], color[2])
     renderer.copy(texture, NULL, &dest)
+    if color is not None:
+        texture.set_color_mod(255, 255, 255)
 
 
 cdef class Chord:
