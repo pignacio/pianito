@@ -45,20 +45,30 @@ from .SDL2 cimport (
     SDL_WINDOWPOS_UNDEFINED,
     SDL_WINDOW_SHOWN,
 )
+import collections
 import time
+
 
 cpdef main():
     sdl = SDL()
     run()
 
+
 SCALE = ["A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab"]
 
 NOTES = ["{}{}".format(n, o) for o in "34" for n in SCALE]
 
-MINOR = [0, 3, 7, 12]
-MAJOR = [0, 4, 7, 12]
-MINOR_7 = [0, 3, 7, 10, 12]
-MAJOR_7 = [0, 4, 7, 10, 12]
+MAJOR = ''
+MINOR = 'm'
+MINOR_7 = 'm7'
+SEVENTH = '7'
+
+CHORD_PATTERNS = {
+    MINOR : (0, 3, 7, 12),
+    MAJOR : (0, 4, 7, 12),
+    MINOR_7 : (0, 3, 7, 10, 12),
+    SEVENTH : (0, 4, 7, 10, 12),
+}
 
 
 def make_chord(chord, base):
@@ -77,11 +87,11 @@ cdef copy_to(Renderer renderer, Texture texture, int x, int y):
 
 cdef class Chord:
     cdef SDL_Keycode key
-    cdef list chord
+    cdef str chord
     cdef int diff
 
     @staticmethod
-    cdef create(SDL_Keycode key, list chord, int diff):
+    cdef create(SDL_Keycode key, str chord, int diff):
         res = Chord()
         res.key = key
         res.chord = chord
@@ -92,18 +102,18 @@ CHORDS = [
     Chord.create(SDLK_q, MAJOR, 0),
     Chord.create(SDLK_w, MAJOR, 5),
     Chord.create(SDLK_e, MAJOR, 7),
-    Chord.create(SDLK_r, MAJOR_7, 0),
-    Chord.create(SDLK_t, MAJOR_7, 5),
-    Chord.create(SDLK_y, MAJOR_7, 7),
+    Chord.create(SDLK_r, SEVENTH, 0),
+    Chord.create(SDLK_t, SEVENTH, 5),
+    Chord.create(SDLK_y, SEVENTH, 7),
     Chord.create(SDLK_a, MINOR, 9),
     Chord.create(SDLK_s, MINOR, 2),
     Chord.create(SDLK_d, MINOR, 4),
     Chord.create(SDLK_f, MINOR_7, 9),
     Chord.create(SDLK_g, MINOR_7, 2),
     Chord.create(SDLK_h, MINOR_7, 4),
-    Chord.create(SDLK_z, MAJOR_7, 9),
-    Chord.create(SDLK_x, MAJOR_7, 2),
-    Chord.create(SDLK_c, MAJOR_7, 4),
+    Chord.create(SDLK_z, SEVENTH, 9),
+    Chord.create(SDLK_x, SEVENTH, 2),
+    Chord.create(SDLK_c, SEVENTH, 4),
 ]
 
 def run():
@@ -124,9 +134,7 @@ def run():
     renderer = Renderer.create(window.ptr, SDL_RENDERER_ACCELERATED)
     font = Font.open("Inconsolata.otf", 30)
     texts = [make_text(n, font, renderer) for n in SCALE]
-    minor_texts = [make_text(n + "m", font, renderer) for n in SCALE]
-    seventh_texts = [make_text(n + "7", font, renderer) for n in SCALE]
-    minor_seventh_texts = [make_text(n + "m7", font, renderer) for n in SCALE]
+    chord_texts = {name: [make_text(n + name, font, renderer) for n in SCALE] for name in CHORD_PATTERNS}
     current_text = make_text("Current: ", font, renderer)
 
     chunks = [Chunk.load("notes/{}.ogg".format(n)) for n in NOTES]
@@ -158,7 +166,9 @@ def run():
 
             if chord is not None:
                 Mix_HaltChannel(-1)
-                [chunks[n].play() for n in make_chord(chord.chord, current + chord.diff)]
+                [chunks[n].play() for n in make_chord(CHORD_PATTERNS[chord.chord],
+                                                      current + chord.diff)]
+
 
         renderer.clear()
 
@@ -169,15 +179,15 @@ def run():
         for pos, diff in enumerate([0, 5, 7]):
             text = texts[(current + diff) % 12]
             copy_to(renderer, text, 100 * (pos + 1), 100)
-            text = seventh_texts[(current + diff) % 12]
+            text = chord_texts[SEVENTH][(current + diff) % 12]
             copy_to(renderer, text, 300 + 100 * (pos + 1), 100)
 
         for pos, diff in enumerate([9, 2, 4]):
-            text = minor_texts[(current + diff) % 12]
+            text = chord_texts[MINOR][(current + diff) % 12]
             copy_to(renderer, text, 100 * (pos + 1), 150)
-            text = minor_seventh_texts[(current + diff) % 12]
+            text = chord_texts[MINOR_7][(current + diff) % 12]
             copy_to(renderer, text, 300 + 100 * (pos + 1), 150)
-            text = seventh_texts[(current + diff) % 12]
+            text = chord_texts[SEVENTH][(current + diff) % 12]
             copy_to(renderer, text, 100 * (pos + 1), 200)
 
         renderer.present()
