@@ -80,9 +80,14 @@ cdef make_text(text, Font font, Renderer renderer):
     surface = font.render_text_blended(text, SDL_Color(255, 255, 255, 255))
     return renderer.texture_from_surface(surface)
 
-cdef copy_to(Renderer renderer, Texture texture, int x, int y):
+
+cdef copy_to(Renderer renderer, Texture texture, int x, int y, color=None):
     cdef SDL_Rect dest = SDL_Rect(x, y, texture.width, texture.height)
+    if color is not None:
+        texture.set_color_mod(color[0], color[1], color[2])
     renderer.copy(texture, NULL, &dest)
+    if color is not None:
+        texture.set_color_mod(255, 255, 255)
 
 
 cdef class Chord:
@@ -97,6 +102,7 @@ cdef class Chord:
         res.chord = chord
         res.diff = diff
         return res
+
 
 CHORDS = [
     Chord.create(SDLK_q, MAJOR, 0),
@@ -145,6 +151,7 @@ def run():
 
     current = 0
     history = collections.deque(maxlen=12)
+    playing = (None, None, None)
 
     quit = False
     while not quit:
@@ -173,9 +180,9 @@ def run():
                 chord_base = (current + chord.diff) % 12
                 [chunks[n].play() for n in make_chord(CHORD_PATTERNS[chord.chord],
                                                       chord_base)]
-                data = (current, chord_base, chord.chord)
-                if not history or history[-1] != data:
-                    history.append(data)
+                playing = (current, chord_base, chord.chord)
+                if not history or history[-1] != playing:
+                    history.append(playing)
 
         renderer.clear()
 
@@ -185,8 +192,14 @@ def run():
 
         for i, chord in enumerate(CHORDS):
             y, x = divmod(i, 6)
-            text = chord_texts[chord.chord][(current + chord.diff) % 12]
-            copy_to(renderer, text, 50 + 80 * x, 100 + 50 * y)
+            chord_base = (current + chord.diff) % 12
+            _scale, current_base, current_variation = playing
+            if current_base == chord_base and current_variation == chord.chord:
+                color = (255, 0, 0)
+            else:
+                color = None
+            text = chord_texts[chord.chord][chord_base]
+            copy_to(renderer, text, 50 + 80 * x, 100 + 50 * y, color=color)
 
         history_x, history_y = 600, 50
         copy_to(renderer, history_text, history_x, history_y)
