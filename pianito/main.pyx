@@ -133,9 +133,10 @@ def run():
         SDL_WINDOW_SHOWN)
     renderer = Renderer.create(window.ptr, SDL_RENDERER_ACCELERATED)
     font = Font.open("Inconsolata.otf", 30)
-    texts = [make_text(n, font, renderer) for n in SCALE]
+    texts = [make_text("({})".format(n), font, renderer) for n in SCALE]
     chord_texts = {name: [make_text(n + name, font, renderer) for n in SCALE] for name in CHORD_PATTERNS}
     current_text = make_text("Current: ", font, renderer)
+    history_text = make_text("HISTORY: ", font, renderer)
 
     chunks = [Chunk.load("notes/{}.ogg".format(n)) for n in NOTES]
     if not all(chunks):
@@ -147,8 +148,8 @@ def run():
 
     quit = False
     while not quit:
-        chord = None
         while SDL_PollEvent(&event):
+            chord = None
             if event.type == SDL_QUIT:
                 quit = True
             elif event.type == SDL_KEYDOWN:
@@ -157,8 +158,10 @@ def run():
                     quit = True
                 elif key == SDLK_UP:
                     current += 1
+                    current %= 12
                 elif key == SDLK_DOWN:
                     current -= 1
+                    current %= 12
                 for chord in CHORDS:
                     if key == chord.key:
                         break
@@ -185,5 +188,13 @@ def run():
             text = chord_texts[chord.chord][(current + chord.diff) % 12]
             copy_to(renderer, text, 50 + 80 * x, 100 + 50 * y)
 
+        history_x, history_y = 600, 50
+        copy_to(renderer, history_text, history_x, history_y)
+        for i, data in enumerate(history):
+            scale, chord_base, variation = data
+            text = chord_texts[variation][chord_base]
+            copy_to(renderer, text, history_x, history_y + 40 * (i + 1))
+            text = texts[scale]
+            copy_to(renderer, text, history_x + 80, history_y + 40 * (i + 1))
         renderer.present()
         SDL_Delay(10)
