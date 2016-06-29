@@ -176,19 +176,10 @@ def run():
         copy_to(renderer, current_text, 30, 30)
         copy_to(renderer, text, 30 + current_text.width, 30)
 
-        for pos, diff in enumerate([0, 5, 7]):
-            text = texts[(current + diff) % 12]
-            copy_to(renderer, text, 100 * (pos + 1), 100)
-            text = chord_texts[SEVENTH][(current + diff) % 12]
-            copy_to(renderer, text, 300 + 100 * (pos + 1), 100)
-
-        for pos, diff in enumerate([9, 2, 4]):
-            text = chord_texts[MINOR][(current + diff) % 12]
-            copy_to(renderer, text, 100 * (pos + 1), 150)
-            text = chord_texts[MINOR_7][(current + diff) % 12]
-            copy_to(renderer, text, 300 + 100 * (pos + 1), 150)
-            text = chord_texts[SEVENTH][(current + diff) % 12]
-            copy_to(renderer, text, 100 * (pos + 1), 200)
+        for i, chord in enumerate(CHORDS):
+            y, x = divmod(i, 6)
+            text = chord_texts[chord.chord][(current + chord.diff) % 12]
+            copy_to(renderer, text, 50 + 80 * x, 100 + 50 * y)
 
         renderer.present()
         SDL_Delay(10)
