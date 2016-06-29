@@ -2,3 +2,6 @@ build
 tree.html
 
 *.pyc
+
+# issue2branch config file
+.issue2branch.config
