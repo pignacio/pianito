@@ -143,6 +143,7 @@ def run():
         return
 
     current = 0
+    history = collections.deque(maxlen=12)
 
     quit = False
     while not quit:
@@ -166,9 +167,12 @@ def run():
 
             if chord is not None:
                 Mix_HaltChannel(-1)
+                chord_base = (current + chord.diff) % 12
                 [chunks[n].play() for n in make_chord(CHORD_PATTERNS[chord.chord],
-                                                      current + chord.diff)]
-
+                                                      chord_base)]
+                data = (current, chord_base, chord.chord)
+                if not history or history[-1] != data:
+                    history.append(data)
 
         renderer.clear()
 
