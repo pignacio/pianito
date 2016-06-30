@@ -1,3 +1,4 @@
+from .keyboard cimport draw_keyboard
 from .logutils cimport (
     log_info,
 )
@@ -64,10 +65,10 @@ MINOR_7 = 'm7'
 SEVENTH = '7'
 
 CHORD_PATTERNS = {
-    MINOR : (0, 3, 7, 12),
-    MAJOR : (0, 4, 7, 12),
-    MINOR_7 : (0, 3, 7, 10, 12),
-    SEVENTH : (0, 4, 7, 10, 12),
+    MINOR : (0, 3, 7),
+    MAJOR : (0, 4, 7),
+    MINOR_7 : (0, 3, 7, 10),
+    SEVENTH : (0, 4, 7, 10),
 }
 
 
@@ -129,6 +130,7 @@ def run():
     cdef Texture text
     cdef Texture current_text
     cdef Chord chord
+    cdef SDL_Rect rect
 
     window = Window.create(
         "Pianito :O",
@@ -152,6 +154,7 @@ def run():
     current = 0
     history = collections.deque(maxlen=12)
     playing = (None, None, None)
+    chord_positions = []
 
     quit = False
     while not quit:
@@ -178,12 +181,14 @@ def run():
             if chord is not None:
                 Mix_HaltChannel(-1)
                 chord_base = (current + chord.diff) % 12
-                [chunks[n].play() for n in make_chord(CHORD_PATTERNS[chord.chord],
-                                                      chord_base)]
+                chord_positions = make_chord(CHORD_PATTERNS[chord.chord],
+                                             chord_base)
+                [chunks[n].play() for n in chord_positions]
                 playing = (current, chord_base, chord.chord)
                 if not history or history[-1] != playing:
                     history.append(playing)
 
+        renderer.set_draw_color(0, 0, 0, 0)
         renderer.clear()
 
         text = texts[current]
@@ -209,5 +214,12 @@ def run():
             copy_to(renderer, text, history_x, history_y + 40 * (i + 1))
             text = texts[scale]
             copy_to(renderer, text, history_x + 80, history_y + 40 * (i + 1))
+
+        rect = SDL_Rect(50, 350, 500, 180)
+        keyboard_state = [False] * 24
+        for note in chord_positions:
+            keyboard_state[note] = True
+        draw_keyboard(renderer, rect, keyboard_state)
+
         renderer.present()
         SDL_Delay(10)
